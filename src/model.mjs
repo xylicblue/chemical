@@ -1,0 +1,41 @@
+export const clone = value => structuredClone(value);
+export function visibleProducts(content, query = '', category = 'All materials') {
+  const term = query.trim().toLocaleLowerCase();
+  return content.products.filter(p => p.visible !== false && (category === 'All materials' || p.category === category) && (!term || [p.name, p.category, p.cas, p.formula, p.description, p.applications].join(' ').toLocaleLowerCase().includes(term))).sort((a,b)=>Number(b.featured)-Number(a.featured));
+}
+export function categories(content) { return ['All materials', ...new Set(content.products.filter(p => p.visible !== false).map(p => p.category))]; }
+export function validateContent(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Website content must be an object.');
+  for (const k of ['brand','hero','intro','catalogue','industrySection','approach','contact','footer','navigation']) {
+    if (!data[k] || typeof data[k] !== 'object' || Array.isArray(data[k])) throw new Error(`Missing website section: ${k}.`);
+  }
+  const text = (v, field, max = 5000, required = false) => { if (typeof v !== 'string' || v.length > max || (required && !v.trim())) throw new Error(`Please check ${field}.`); };
+  text(data.brand.name, 'company name', 100, true); text(data.hero.title, 'headline', 240, true);
+  if (!Array.isArray(data.products) || data.products.length > 500) throw new Error('The catalogue can contain up to 500 products.');
+  const ids = new Set();
+  for (const p of data.products) {
+    text(p.id, 'product identifier', 100, true); text(p.name, 'product name', 160, true); text(p.category, 'product category', 100, true);
+    if (!/^[a-z0-9-]+$/.test(p.id) || ids.has(p.id)) throw new Error('Product identifiers must be unique and use lowercase letters, numbers, or hyphens.');
+    ids.add(p.id);
+    for (const key of ['formula','cas','grade','description','applications','packaging','note']) text(p[key], `product ${key}`);
+    if (typeof p.visible !== 'boolean' || typeof p.featured !== 'boolean') throw new Error('Product visibility values are invalid.');
+  }
+  if (!Array.isArray(data.industries) || data.industries.length > 30) throw new Error('Add up to 30 industries.');
+  for (const i of data.industries) { text(i.name, 'industry name', 120, true); text(i.detail, 'industry description'); text(i.number, 'industry number', 10); }
+  for (const key of ['pillars']) { if (!Array.isArray(data.intro[key]) || data.intro[key].length > 12) throw new Error('Check the company principles.'); for (const v of data.intro[key]) { text(v.title, 'principle title', 180, true); text(v.text, 'principle description'); } }
+  if (!Array.isArray(data.approach.steps) || data.approach.steps.length > 12) throw new Error('Check the approach steps.');
+  for (const v of data.approach.steps) { text(v.title, 'step title', 180, true); text(v.text, 'step description'); }
+  const checkStrings = obj => { for (const [key,v] of Object.entries(obj)) { if (typeof v === 'string') { text(v, key); if (v.includes('\u2014')) throw new Error('Use a full stop or comma instead of an em dash.'); } else if (v && typeof v === 'object') checkStrings(v); } }; checkStrings(data);
+  if (data.contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.contact.email)) throw new Error('Enter a valid contact email address.');
+  if (!isSafeImage(data.hero.image)) throw new Error('Use an HTTPS image URL or a local asset path.');
+  if (JSON.stringify(data).length > 750000) throw new Error('Content is too large.');
+  return data;
+}
+export function isSafeImage(url) { return typeof url === 'string' && (/^https:\/\/[^\s]+$/i.test(url) || /^\/assets\/[a-z0-9._/-]+$/i.test(url)) && !/[<>"']/.test(url); }
+export function validateInquiry(body) {
+  const field = (k, max, required = true) => { if (typeof body[k] !== 'string' || body[k].length > max || (required && !body[k].trim())) throw new Error(`Please check your ${k}.`); return body[k].trim(); };
+  const name = field('name',120), email = field('email',254), company = field('company',180,false), product = field('product',180,false), quantity = field('quantity',180,false), message = field('message',5000);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid email address.');
+  if (body.consent !== true) throw new Error('Please agree to being contacted about your inquiry.');
+  return { name, email, company, product, quantity, message };
+}

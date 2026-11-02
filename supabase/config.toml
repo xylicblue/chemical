@@ -1,0 +1,2 @@
+[functions.chemicals-cms]
+verify_jwt = false

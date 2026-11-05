@@ -33,6 +33,20 @@ The editor manages branding, navigation, homepage text, imagery, product categor
 
 The shared password can be changed in Overview. This invalidates all current editor sessions. Sessions expire after eight hours and are kept only in memory in the browser. Locking the studio revokes that session. There are no public user accounts and Supabase Auth is not used.
 
+### Supply partner ticker
+
+The **Supply partners** section appears directly above the product catalogue. In the studio, choose **Supply partners** to:
+
+- Edit the heading and optional supporting note, or hide the whole section.
+- Add, remove, reorder, or hide individual partner cards, up to 40 entries.
+- Choose **Text name** or **Logo image** for each partner. Names remain required for accessibility and serve as a fallback if a logo cannot load.
+- Upload JPG, PNG, or WebP logos up to 5 MB, or paste an HTTPS image URL. Transparent PNG or WebP logos work best.
+- Enable or disable continuous scrolling, choose its speed, and change direction.
+
+Visitors can pause the ticker. Hovering pauses movement, and reduced-motion preferences produce a static, horizontally scrollable row. A single visible partner stays still. Hidden or empty partner lists do not leave an empty section.
+
+Partner changes use **Save draft** and **Publish changes**, including logo URLs stored in Supabase. Old drafts and history entries without a partner section load safe placeholder defaults without changing their saved content. Replace the sample names with confirmed partners and remove the sample note before presenting them as actual suppliers. Logo uploads use the existing protected image endpoint, and no new frontend environment variables are needed.
+
 ## Supabase
 
 Project reference: `vutiqwxelirslgcnvhsn`.

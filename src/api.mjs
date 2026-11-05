@@ -12,3 +12,11 @@ export async function api(action, { method = 'GET', body } = {}) {
   if (action === 'login') session = result.token;
   return result;
 }
+export async function uploadImage(file) {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPG, PNG, or WebP image.');
+  if (file.size > 5 * 1024 * 1024) throw new Error('Choose an image smaller than 5 MB.');
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return api('upload', { method: 'POST', body: { data: btoa(binary), type: file.type } });
+}

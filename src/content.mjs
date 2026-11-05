@@ -1,4 +1,7 @@
+import { createDefaultPartnerTicker } from './model.mjs';
+
 export const initialContent = {
+  partnerTicker: createDefaultPartnerTicker(),
   brand: { name: 'Aster', descriptor: 'CHEMICALS', tagline: 'Considered chemistry. Lasting partnerships.' },
   hero: {
     eyebrow: 'A BETTER WAY TO SOURCE',

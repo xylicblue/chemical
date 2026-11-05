@@ -1,4 +1,25 @@
 export const clone = value => structuredClone(value);
+export function createDefaultPartnerTicker() {
+  return {
+    enabled: true,
+    moving: true,
+    heading: 'Supply partners',
+    note: 'Sample names. Replace with your confirmed supply partners.',
+    speed: 'slow',
+    direction: 'left',
+    items: ['One', 'Two', 'Three', 'Four', 'Five', 'Six'].map((name, index) => ({
+      id: `partner-${index + 1}`,
+      name: `Partner ${name}`,
+      presentation: 'text',
+      logo: '',
+      logoAlt: '',
+      visible: true
+    }))
+  };
+}
+export function withContentDefaults(content) {
+  return { ...content, partnerTicker: content.partnerTicker === undefined ? createDefaultPartnerTicker() : content.partnerTicker };
+}
 export function visibleProducts(content, query = '', category = 'All materials') {
   const term = query.trim().toLocaleLowerCase();
   return content.products.filter(p => p.visible !== false && (category === 'All materials' || p.category === category) && (!term || [p.name, p.category, p.cas, p.formula, p.description, p.applications].join(' ').toLocaleLowerCase().includes(term))).sort((a,b)=>Number(b.featured)-Number(a.featured));
@@ -25,6 +46,27 @@ export function validateContent(data) {
   for (const key of ['pillars']) { if (!Array.isArray(data.intro[key]) || data.intro[key].length > 12) throw new Error('Check the company principles.'); for (const v of data.intro[key]) { text(v.title, 'principle title', 180, true); text(v.text, 'principle description'); } }
   if (!Array.isArray(data.approach.steps) || data.approach.steps.length > 12) throw new Error('Check the approach steps.');
   for (const v of data.approach.steps) { text(v.title, 'step title', 180, true); text(v.text, 'step description'); }
+  if (data.partnerTicker !== undefined) {
+    const ticker = data.partnerTicker;
+    if (!ticker || typeof ticker !== 'object' || Array.isArray(ticker)) throw new Error('Please check the supply partner settings.');
+    if (typeof ticker.enabled !== 'boolean' || typeof ticker.moving !== 'boolean') throw new Error('Please check the partner ticker visibility and movement settings.');
+    text(ticker.heading, 'partner section heading', 120);
+    text(ticker.note, 'partner section note', 500);
+    if (!['slow', 'standard', 'fast'].includes(ticker.speed) || !['left', 'right'].includes(ticker.direction)) throw new Error('Please check the partner ticker speed and direction.');
+    if (!Array.isArray(ticker.items) || ticker.items.length > 40) throw new Error('Add up to 40 supply partners.');
+    const partnerIds = new Set();
+    for (const partner of ticker.items) {
+      if (!partner || typeof partner !== 'object' || Array.isArray(partner)) throw new Error('Please check the supply partner entry.');
+      text(partner.id, 'partner identifier', 100, true);
+      if (!/^[a-z0-9-]+$/.test(partner.id) || partnerIds.has(partner.id)) throw new Error('Supply partner identifiers must be unique lowercase letters, numbers, or hyphens.');
+      partnerIds.add(partner.id);
+      text(partner.name, 'partner name', 160, true);
+      text(partner.logo, 'partner logo URL', 2048);
+      text(partner.logoAlt, 'partner logo description', 240);
+      if (partner.logo && !isSafeImage(partner.logo)) throw new Error('Use an HTTPS partner logo URL or a local asset path.');
+      if (!['text', 'logo'].includes(partner.presentation) || typeof partner.visible !== 'boolean') throw new Error('Please check the partner display settings.');
+    }
+  }
   const checkStrings = obj => { for (const [key,v] of Object.entries(obj)) { if (typeof v === 'string') { text(v, key); if (v.includes('\u2014')) throw new Error('Use a full stop or comma instead of an em dash.'); } else if (v && typeof v === 'object') checkStrings(v); } }; checkStrings(data);
   if (data.contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.contact.email)) throw new Error('Enter a valid contact email address.');
   if (!isSafeImage(data.hero.image)) throw new Error('Use an HTTPS image URL or a local asset path.');

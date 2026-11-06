@@ -68,6 +68,11 @@
   background: #eef4f3;
   border-color: #eef4f3;
   color: #102938;
+  min-height: 56px;
+  padding: 18px 26px;
+  font-size: 13px;
+  font-weight: 550;
+  gap: 30px;
 }
 .public-site .hero-actions .button-dark:hover {
   background: #d5e3dc;
@@ -317,7 +322,12 @@
   .product-document { align-items: start; flex-direction: column; gap: 9px; }
 }
 /* Quiet emphasis at the transition from the hero to the company story. */
-.public-site .hero { padding-bottom: 48px; }
+.public-site .hero { padding-bottom: 26px; }
+.public-site .hero .eyebrow { margin-bottom: 28px; }
+.public-site .hero h1 .hero-highlight { color: #bdd8ca; }
+.public-site .hero-description { max-width: 420px; margin-top: 26px; line-height: 1.75; }
+.public-site .hero-actions { margin-top: 29px; gap: 26px; }
+.public-site .hero-bottom { margin-top: 38px; }
 .hero-stats {
   background: linear-gradient(180deg, transparent 50%, #fff 50%);
   padding-top: 4px;
@@ -415,7 +425,12 @@
   .company-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 780px) {
-  .public-site .hero { padding-bottom: 34px; }
+  .public-site .hero { padding-bottom: 20px; }
+  .public-site .hero .eyebrow { margin-bottom: 23px; }
+  .public-site .hero-description { font-size: 14px; }
+  .public-site .hero-actions { margin-top: 26px; gap: 19px; }
+  .public-site .hero-actions .button-dark { min-height: 52px; padding: 16px 22px; font-size: 12px; gap: 24px; }
+  .public-site .hero-bottom { margin-top: 30px; }
   .hero-stats-panel { padding: 10px 18px; border-radius: 11px; }
   .hero-stats-grid { grid-template-columns: repeat(var(--stats-mobile-count), minmax(0, 1fr)); }
   .hero-stat { padding: 22px 14px; }

@@ -24,6 +24,12 @@ The production build is in `dist/`. The project uses exact dependency versions a
 
 ## Client editing
 
+In **Homepage introduction**, use **Headline accent phrase** to highlight an exact part of the headline in muted sage. Leave it blank to keep the headline white. The supporting description and main button label remain editable there too. Accent styling and spacing do not change the hero image crop.
+
+In **Product catalogue**, edit each material's available grades, purity or concentration, full specifications, packaging sizes, confirmed country of origin and manufacturer, minimum order quantity, and applications. Blank details display confirmation or request messages. Assign one or more industries using the checkboxes, or add an additional sector. The catalogue includes Pharmaceuticals, Cosmetics, Food, Textiles, and Industrial filters, with material category and search working alongside them. Existing explicit industrial categories and textile applications provide initial tags; other product-sector assignments require client confirmation.
+
+Set TDS and SDS availability independently. Optionally paste an HTTPS URL to the current document. **Available** with a URL shows a document link; without a URL it displays **Available on request**. New and legacy entries default to **Request availability**. PDF uploads are not part of the image upload control. The quote button opens the inquiry form with the selected product name already filled in. Quote and detail button text can be edited in the catalogue section copy.
+
 In **Brand & navigation → Company logo**, choose an uploaded image, editable initials, or a hidden logo mark. Upload a JPG, PNG, or WebP up to 5 MB, or paste an HTTPS image URL. Transparent PNG or WebP artwork works best on the navy background. Header and footer use the same logo, with initials as a fallback if the image fails to load. Save or publish through the normal workflow.
 
 The **Hero statistics** section controls the figures displayed at the base of the hero. Edit each number and label, reorder or remove entries, add up to four figures, or hide the panel. The initial `00+` values are placeholders for confirmed company figures. Changes use the normal draft, preview, and publish workflow. Existing content gains these settings without replacing any client text.

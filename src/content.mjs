@@ -6,10 +6,11 @@ export const initialContent = {
   partnerTicker: createDefaultPartnerTicker(),
   brand: { name: 'Aster', descriptor: 'CHEMICALS', tagline: 'Considered chemistry. Lasting partnerships.' },
   hero: {
-    eyebrow: 'A BETTER WAY TO SOURCE',
-    title: 'The right chemistry.\nFor what comes next.',
-    description: 'Thoughtful sourcing. Clear specifications. A chemical supply partner built around the way you work.',
-    primary: 'Explore our products', secondary: 'Let’s talk chemistry',
+    eyebrow: 'Your Trusted Chemical Partner',
+    title: 'Powering Industries Through Reliable Chemical Supply.',
+    highlight: 'Reliable Chemical Supply.',
+    description: 'Your trusted sourcing and distribution partner for quality chemical raw materials, serving pharmaceutical, cosmetic, food, textile and industrial businesses across Pakistan.',
+    primary: 'Explore Products', secondary: 'Request a Quote',
     image: '/assets/chemistry-still-life.webp',
     imageAlt: 'Clear laboratory glassware with blue and sage liquids and a dish of mineral crystals',
     caption: 'PRECISION IN EVERY DETAIL', captionDetail: 'From first specification to final delivery.'

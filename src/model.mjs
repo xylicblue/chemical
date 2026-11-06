@@ -60,6 +60,7 @@ export function createDefaultPartnerTicker() {
 export function withContentDefaults(content) {
   return {
     ...content,
+    hero: { highlight: '', ...content.hero },
     catalogue: { ...CATALOGUE_LABELS, ...content.catalogue },
     products: Array.isArray(content.products) ? content.products.map(withProductDefaults) : content.products,
     brandLogo: content.brandLogo === undefined ? createDefaultBrandLogo(content.brand?.name) : content.brandLogo,
@@ -79,6 +80,7 @@ export function validateContent(data) {
   }
   const text = (v, field, max = 5000, required = false) => { if (typeof v !== 'string' || v.length > max || (required && !v.trim())) throw new Error(`Please check ${field}.`); };
   text(data.brand.name, 'company name', 100, true); text(data.hero.title, 'headline', 240, true);
+  if (data.hero.highlight !== undefined) text(data.hero.highlight, 'headline accent phrase', 240);
   for (const key of Object.keys(CATALOGUE_LABELS)) if (data.catalogue[key] !== undefined) text(data.catalogue[key], `catalogue ${key}`, 120, true);
   if (data.brandLogo !== undefined) {
     const logo = data.brandLogo;
@@ -112,7 +114,7 @@ export function validateContent(data) {
       for (const industry of p.industries) {
         text(industry, 'product industry', 80, true);
         const key = industry.trim().toLocaleLowerCase();
-        if (key === 'all industries' || sectors.has(key)) throw new Error('Product industries must be unique sector names.');
+        if (industry !== industry.trim() || key === 'all industries' || sectors.has(key)) throw new Error('Product industries must be unique, trimmed sector names.');
         sectors.add(key);
       }
     }

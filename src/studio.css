@@ -19,6 +19,11 @@
 .partner-remove-confirm > div { display: flex; gap: 10px; flex-wrap: wrap; }
 .partner-clear-logo { margin-bottom: 17px; }
 .stats-editor { border: 0; padding: 0; min-width: 0; }
+.product-details-editor { border: 0; padding: 0; margin: 0; min-width: 0; }
+.product-editor-help { font-size: 12px; line-height: 1.8; color: #637477; margin-bottom: 20px; }
+.product-industry-editor { border: 1px solid #dce4de; border-radius: 6px; padding: 18px; margin: 24px 0; min-width: 0; }
+.product-industry-editor > legend { font-size: 14px; font-weight: 500; padding-inline: 6px; }
+.product-details-editor .editor-subcard > h3 { font-size: 14px; font-weight: 500; line-height: 1.7; margin: 0 0 18px; }
 .brand-logo-editor { border: 0; padding: 0; margin: 0; min-width: 0; }
 .brand-logo-help { font-size: 12px; line-height: 1.8; color: #637477; margin-bottom: 18px; }
 .brand-logo-preview { display: flex; align-items: center; gap: 12px; background: #0e2435; color: #fff; border-radius: 6px; padding: 20px; margin-bottom: 22px; overflow-wrap: anywhere; }

@@ -1,4 +1,4 @@
-import { createDefaultBrandLogo, createDefaultHeroStats, createDefaultPartnerTicker } from './model.mjs';
+import { CATALOGUE_LABELS, createDefaultBrandLogo, createDefaultHeroStats, createDefaultPartnerTicker, withProductDefaults } from './model.mjs';
 
 export const initialContent = {
   brandLogo: createDefaultBrandLogo(),
@@ -25,7 +25,7 @@ export const initialContent = {
       { title: 'Keep it clear.', text: 'Straightforward conversations about sourcing, packaging, and delivery requirements.' }
     ]
   },
-  catalogue: { eyebrow: 'THE PRODUCT COLLECTION', title: 'Materials with purpose.', description: 'Explore a sample of our product range. Find your category, review the details, and start a conversation.', searchPlaceholder: 'Search name, application or CAS number', emptyTitle: 'No matching materials.', emptyText: 'Try another search or category. You can also ask us about a specific material.' },
+  catalogue: { ...CATALOGUE_LABELS, eyebrow: 'THE PRODUCT COLLECTION', title: 'Materials with purpose.', description: 'Explore a sample of our product range. Find your category, review the details, and start a conversation.', searchPlaceholder: 'Search name, application or CAS number', emptyTitle: 'No matching materials.', emptyText: 'Try another search or category. You can also ask us about a specific material.' },
   products: [
     { id: 'sodium-carbonate', name: 'Sodium carbonate', category: 'Industrial', formula: 'Na₂CO₃', cas: '497-19-8', grade: 'Grade to be confirmed', description: 'A versatile inorganic material commonly discussed for glass, detergent, and industrial processing applications.', applications: 'Glass manufacturing, detergents, process chemistry', packaging: 'Packaging and order quantities on request', note: 'Confirm grade, suitability, specifications, and handling requirements with the supplier before ordering.', featured: true, visible: true },
     { id: 'citric-acid', name: 'Citric acid', category: 'Specialty', formula: 'C₆H₈O₇', cas: '77-92-9', grade: 'Grade to be confirmed', description: 'An organic acid used in a range of formulations and processing applications where acidity control is required.', applications: 'Formulation, cleaning, process adjustment', packaging: 'Packaging and order quantities on request', note: 'Application suitability and regulatory requirements depend on the supplied grade. Request full documentation.', featured: true, visible: true },
@@ -33,7 +33,7 @@ export const initialContent = {
     { id: 'hydrogen-peroxide', name: 'Hydrogen peroxide', category: 'Water & process', formula: 'H₂O₂', cas: '7722-84-1', grade: 'Concentration to be confirmed', description: 'An oxidising material used in selected water and industrial process applications, subject to concentration and suitability.', applications: 'Water processes, textiles, industrial treatment', packaging: 'Compatible packaging on request', note: 'Oxidising material. Concentration, compatibility, storage, and handling must be assessed against the current safety data sheet.', featured: true, visible: true },
     { id: 'calcium-carbonate', name: 'Calcium carbonate', category: 'Industrial', formula: 'CaCO₃', cas: '471-34-1', grade: 'Particle size to be confirmed', description: 'A mineral material used as a filler and functional ingredient across a range of industrial formulations.', applications: 'Polymers, coatings, construction materials', packaging: 'Packaging and order quantities on request', note: 'Request grade, particle-size distribution, and product documentation to assess suitability.', featured: false, visible: true },
     { id: 'glycerine', name: 'Glycerine', category: 'Specialty', formula: 'C₃H₈O₃', cas: '56-81-5', grade: 'Grade to be confirmed', description: 'A polyol considered for technical formulations where moisture retention and processing properties are relevant.', applications: 'Technical formulations, process applications', packaging: 'Packaging and order quantities on request', note: 'Confirm origin, grade, specifications, and application requirements before ordering.', featured: false, visible: true }
-  ],
+  ].map(withProductDefaults),
   industrySection: { eyebrow: 'BUILT AROUND YOUR APPLICATION', title: 'Different industries.\nThe same attention to detail.', description: 'A material is only the beginning. Understanding where it goes makes the difference.' },
   industries: [
     { name: 'Manufacturing', detail: 'Raw materials for the processes behind everyday products.', number: '01' },

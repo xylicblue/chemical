@@ -1,4 +1,32 @@
 export const clone = value => structuredClone(value);
+export const PRODUCT_INDUSTRIES = Object.freeze(['Pharmaceuticals', 'Cosmetics', 'Food', 'Textiles', 'Industrial']);
+export const CATALOGUE_LABELS = Object.freeze({ quoteLabel: 'Request a quotation', detailsLabel: 'View details', industryFilterLabel: 'Browse by industry', allIndustriesLabel: 'All industries' });
+export function legacyProductIndustries(product) {
+  const industries = [];
+  if (/\btextiles?\b/i.test(product.applications || '')) industries.push('Textiles');
+  if (/^industrial(?: chemicals)?$/i.test(product.category || '')) industries.push('Industrial');
+  return industries;
+}
+export function withProductDefaults(product) {
+  return {
+    purity: '', specifications: '', origin: '', manufacturer: '', minimumOrder: '',
+    ...product,
+    industries: product.industries === undefined ? legacyProductIndustries(product) : product.industries,
+    documents: {
+      tds: { status: 'request', url: '', ...product.documents?.tds },
+      sds: { status: 'request', url: '', ...product.documents?.sds }
+    }
+  };
+}
+export function productIndustryOptions(content, includeHidden = false) {
+  return [...new Set([...PRODUCT_INDUSTRIES, ...content.products.filter(p => includeHidden || p.visible !== false).flatMap(p => p.industries === undefined ? legacyProductIndustries(p) : p.industries)])];
+}
+export function isSafeDocument(url) {
+  return typeof url === 'string' && (/^https:\/\/[^\s]+$/i.test(url) || /^\/assets\/[a-z0-9._/-]+\.pdf$/i.test(url)) && !/[<>"']/.test(url);
+}
+export function createDefaultBrandLogo(name = 'A') {
+  return { mode: 'initials', text: String(name).trim().slice(0, 1).toUpperCase() || 'A', image: '' };
+}
 export function createDefaultHeroStats() {
   return {
     enabled: true,
@@ -32,13 +60,16 @@ export function createDefaultPartnerTicker() {
 export function withContentDefaults(content) {
   return {
     ...content,
+    catalogue: { ...CATALOGUE_LABELS, ...content.catalogue },
+    products: Array.isArray(content.products) ? content.products.map(withProductDefaults) : content.products,
+    brandLogo: content.brandLogo === undefined ? createDefaultBrandLogo(content.brand?.name) : content.brandLogo,
     heroStats: content.heroStats === undefined ? createDefaultHeroStats() : content.heroStats,
     partnerTicker: content.partnerTicker === undefined ? createDefaultPartnerTicker() : content.partnerTicker
   };
 }
-export function visibleProducts(content, query = '', category = 'All materials') {
+export function visibleProducts(content, query = '', category = 'All materials', industry = 'All industries') {
   const term = query.trim().toLocaleLowerCase();
-  return content.products.filter(p => p.visible !== false && (category === 'All materials' || p.category === category) && (!term || [p.name, p.category, p.cas, p.formula, p.description, p.applications].join(' ').toLocaleLowerCase().includes(term))).sort((a,b)=>Number(b.featured)-Number(a.featured));
+  return content.products.filter(p => p.visible !== false && (category === 'All materials' || p.category === category) && (industry === 'All industries' || (p.industries === undefined ? legacyProductIndustries(p) : p.industries).includes(industry)) && (!term || [p.name, p.category, p.cas, p.formula, p.description, p.applications, p.grade, p.purity, p.specifications, p.packaging, p.origin, p.manufacturer, ...(p.industries || [])].join(' ').toLocaleLowerCase().includes(term))).sort((a,b)=>Number(b.featured)-Number(a.featured));
 }
 export function categories(content) { return ['All materials', ...new Set(content.products.filter(p => p.visible !== false).map(p => p.category))]; }
 export function validateContent(data) {
@@ -48,6 +79,14 @@ export function validateContent(data) {
   }
   const text = (v, field, max = 5000, required = false) => { if (typeof v !== 'string' || v.length > max || (required && !v.trim())) throw new Error(`Please check ${field}.`); };
   text(data.brand.name, 'company name', 100, true); text(data.hero.title, 'headline', 240, true);
+  for (const key of Object.keys(CATALOGUE_LABELS)) if (data.catalogue[key] !== undefined) text(data.catalogue[key], `catalogue ${key}`, 120, true);
+  if (data.brandLogo !== undefined) {
+    const logo = data.brandLogo;
+    if (!logo || typeof logo !== 'object' || Array.isArray(logo) || !['initials', 'image', 'hidden'].includes(logo.mode)) throw new Error('Please check the company logo display setting.');
+    text(logo.text, 'logo initials', 3, logo.mode === 'initials');
+    text(logo.image, 'company logo URL', 2048, logo.mode === 'image');
+    if (logo.image && !isSafeImage(logo.image)) throw new Error('Use an HTTPS company logo URL or a local asset path.');
+  }
   if (data.heroStats !== undefined) {
     const stats = data.heroStats;
     if (!stats || typeof stats !== 'object' || Array.isArray(stats) || typeof stats.enabled !== 'boolean') throw new Error('Please check the hero statistics settings.');
@@ -66,6 +105,26 @@ export function validateContent(data) {
     if (!/^[a-z0-9-]+$/.test(p.id) || ids.has(p.id)) throw new Error('Product identifiers must be unique and use lowercase letters, numbers, or hyphens.');
     ids.add(p.id);
     for (const key of ['formula','cas','grade','description','applications','packaging','note']) text(p[key], `product ${key}`);
+    for (const key of ['purity', 'specifications', 'origin', 'manufacturer', 'minimumOrder']) if (p[key] !== undefined) text(p[key], `product ${key}`);
+    if (p.industries !== undefined) {
+      if (!Array.isArray(p.industries) || p.industries.length > 15) throw new Error('Choose up to 15 industries per product.');
+      const sectors = new Set();
+      for (const industry of p.industries) {
+        text(industry, 'product industry', 80, true);
+        const key = industry.trim().toLocaleLowerCase();
+        if (key === 'all industries' || sectors.has(key)) throw new Error('Product industries must be unique sector names.');
+        sectors.add(key);
+      }
+    }
+    if (p.documents !== undefined) {
+      if (!p.documents || typeof p.documents !== 'object' || Array.isArray(p.documents)) throw new Error('Please check product documentation.');
+      for (const type of ['tds', 'sds']) {
+        const doc = p.documents[type];
+        if (!doc || typeof doc !== 'object' || Array.isArray(doc) || !['request', 'available', 'not-available'].includes(doc.status)) throw new Error(`Please check ${type.toUpperCase()} availability.`);
+        text(doc.url, `${type.toUpperCase()} document URL`, 2048);
+        if (doc.url && !isSafeDocument(doc.url)) throw new Error('Use an HTTPS document URL or a local PDF asset path.');
+      }
+    }
     if (typeof p.visible !== 'boolean' || typeof p.featured !== 'boolean') throw new Error('Product visibility values are invalid.');
   }
   if (!Array.isArray(data.industries) || data.industries.length > 30) throw new Error('Add up to 30 industries.');

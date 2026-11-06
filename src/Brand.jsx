@@ -9,7 +9,7 @@ export function BrandMark({ settings, name }) {
   return (
     <span className={`brand-mark${image ? ' brand-mark-image' : ''}`} aria-hidden="true">
       {image ? <img src={settings.image} alt="" width="44" height="44" decoding="async" onError={() => setFailedSource(settings.image)} /> :
-        <span className={`brand-initials${initials.length > 1 ? ' brand-initials-small' : ''}`}>{initials}</span>}
+        <span className={`brand-initials${initials.length > 2 ? ' brand-initials-tiny' : initials.length > 1 ? ' brand-initials-small' : ''}`}>{initials}</span>}
     </span>
   );
 }

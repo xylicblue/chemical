@@ -22,6 +22,8 @@ npm run preview
 
 The production build is in `dist/`. The project uses exact dependency versions and a committed npm lockfile. No third-party animation or icon packages are used.
 
+Public pages show a navy skeleton layout until published content arrives. They never render the local template as a loading or error fallback. Requests time out after 15 seconds and offer a retry; leaving the page cancels the request. Studio previews wait for the editor to send their draft. Hero and logo images keep a shimmer placeholder until the actual file loads, and reduced-motion preferences disable the shimmer. This is a frontend behavior change and does not update saved website content or draft revisions.
+
 ## Client editing
 
 In **Homepage introduction**, use **Headline accent phrase** to highlight an exact part of the headline in muted sage. Leave it blank to keep the headline white. The supporting description and main button label remain editable there too. Accent styling and spacing do not change the hero image crop.

@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { isSafeImage } from './model.mjs';
+import ContentImage from './ContentImage.jsx';
 
 const pixelsPerSecond = { slow: 24, standard: 36, fast: 48 };
 
@@ -10,7 +11,7 @@ export function PartnerCard({ partner }) {
   return (
     <div className="partner-card">
       {showLogo ? (
-        <img src={partner.logo} alt="" decoding="async" loading="lazy" onError={() => setFailed(true)} />
+        <ContentImage src={partner.logo} alt="" decoding="async" loading="lazy" onError={() => setFailed(true)} />
       ) : (
         <span className="partner-card-name">{partner.name}</span>
       )}

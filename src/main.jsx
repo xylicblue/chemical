@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { initialContent } from './content.mjs';
-import { isSafeImage, withContentDefaults } from './model.mjs';
+import { isSafeImage } from './model.mjs';
 import { createInquiryPayload } from './inquiry.mjs';
 import { api, isConnected } from './api.mjs';
 const Studio = React.lazy(() => import('./studio.jsx'));
@@ -12,6 +11,8 @@ import Brand from './Brand.jsx';
 import ProductCatalogue from './ProductCatalogue.jsx';
 import { ProductInformation } from './ProductCard.jsx';
 import HeroHeadline from './HeroHeadline.jsx';
+import SiteContentBoundary from './SiteContentBoundary.jsx';
+import ContentImage from './ContentImage.jsx';
 import './styles.css';
 
 export function Arrow({ diagonal = false, className = '' }) { return <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? 'M6 18 18 6M6 6h12v12' : 'M4 12h15m-6-6 6 6-6 6'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>; }
@@ -33,15 +34,16 @@ function Inquiry({ product, content:c, onClose }) {
 function ProductDetail({product:p,onClose,onInquire,quoteLabel}) {return <Modal title={p.name} onClose={onClose}><ProductInformation product={p} quoteLabel={quoteLabel} onQuote={onInquire}/></Modal>;}
 
 export function Website({previewContent}) {
-  const [content,setContent]=useState(()=>withContentDefaults(previewContent||initialContent)),[loaded,setLoaded]=useState(false),[menu,setMenu]=useState(false),[selected,setSelected]=useState(null),[inquiry,setInquiry]=useState(null),[legal,setLegal]=useState(null);
-  const preview=new URLSearchParams(location.search).get('preview')==='1';
-  useEffect(()=>{if(previewContent){setContent(withContentDefaults(previewContent));return;} if(isConnected()&&!preview)api('content').then(r=>{if(r.content)setContent(withContentDefaults(r.content));}).catch(()=>{}).finally(()=>setLoaded(true));else setLoaded(true);},[previewContent]);
-  useEffect(()=>{if(!preview)return; const handler=e=>{if(e.origin===location.origin&&e.source===window.parent&&e.data?.type==='aster-preview'&&e.data.content){setContent(withContentDefaults(e.data.content));}};window.addEventListener('message',handler);window.parent.postMessage({type:'aster-preview-ready'},location.origin);return()=>window.removeEventListener('message',handler);},[preview]);
+  return <SiteContentBoundary previewContent={previewContent}>{content => <WebsiteContent content={content}/>}</SiteContentBoundary>;
+}
+
+function WebsiteContent({content}) {
+  const [menu,setMenu]=useState(false),[selected,setSelected]=useState(null),[inquiry,setInquiry]=useState(null),[legal,setLegal]=useState(null);
   useEffect(()=>{document.title=`${content.brand.name} ${content.brand.descriptor} | ${content.footer.line}`;const meta=document.querySelector('meta[name="description"]');meta?.setAttribute('content',content.hero.description);},[content]);
   useEffect(()=>{if(!menu)return;const listener=e=>{if(e.key==='Escape')setMenu(false);};window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener);},[menu]);
   const c=content;
   return <div className="public-site"><header className="site-header"><div className="shell header-inner"><Brand content={c}/><nav aria-label="Main navigation" className={menu?'navigation navigation-open':'navigation'}>{[['products',c.navigation.products],['industries',c.navigation.industries],['approach',c.navigation.approach]].map(([href,text])=><a key={href} href={`#${href}`} onClick={()=>setMenu(false)}>{text}</a>)}<a className="nav-contact" href="#contact" onClick={()=>setMenu(false)}>{c.navigation.contact}<Arrow diagonal/></a></nav><button className="mobile-menu" onClick={()=>setMenu(!menu)} aria-expanded={menu} aria-label={menu?'Close navigation':'Open navigation'}><span/ ><span/></button></div></header>
-  <main id="main"><section className="hero shell"><div className="hero-copy"><Eyebrow>{c.hero.eyebrow}</Eyebrow><HeroHeadline title={c.hero.title} highlight={c.hero.highlight}/><p className="hero-description">{c.hero.description}</p><div className="hero-actions"><a className="button button-dark" href="#products">{c.hero.primary}<Arrow/></a><a className="text-link" href="#contact">{c.hero.secondary}<Arrow diagonal/></a></div><div className="hero-bottom"><span className="small-rule"/><span>{c.brand.tagline}</span></div></div><figure className="hero-figure"><div className="hero-image-wrap">{isSafeImage(c.hero.image)&&<img className="hero-image" src={c.hero.image} alt={c.hero.imageAlt} fetchPriority="high" width="1536" height="1024"/>}<div className="image-corner">A<span>01</span></div></div><figcaption><span>{c.hero.caption}</span><p>{c.hero.captionDetail}</p></figcaption></figure></section>
+  <main id="main"><section className="hero shell"><div className="hero-copy"><Eyebrow>{c.hero.eyebrow}</Eyebrow><HeroHeadline title={c.hero.title} highlight={c.hero.highlight}/><p className="hero-description">{c.hero.description}</p><div className="hero-actions"><a className="button button-dark" href="#products">{c.hero.primary}<Arrow/></a><a className="text-link" href="#contact">{c.hero.secondary}<Arrow diagonal/></a></div><div className="hero-bottom"><span className="small-rule"/><span>{c.brand.tagline}</span></div></div><figure className="hero-figure"><div className="hero-image-wrap">{isSafeImage(c.hero.image)&&<ContentImage className="hero-image" src={c.hero.image} alt={c.hero.imageAlt} fetchPriority="high" width="1536" height="1024"/>}<div className="image-corner">A<span>01</span></div></div><figcaption><span>{c.hero.caption}</span><p>{c.hero.captionDetail}</p></figcaption></figure></section>
   <HeroStats settings={c.heroStats}/>
   <CompanySection content={c.intro}/>
   <PartnerTicker settings={c.partnerTicker}/>

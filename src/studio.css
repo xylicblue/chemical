@@ -18,3 +18,10 @@
 .partner-remove-confirm p { font-size: 11px; line-height: 1.7; color: #796954; margin-bottom: 12px; }
 .partner-remove-confirm > div { display: flex; gap: 10px; flex-wrap: wrap; }
 .partner-clear-logo { margin-bottom: 17px; }
+.stats-editor { border: 0; padding: 0; min-width: 0; }
+.brand-logo-editor { border: 0; padding: 0; margin: 0; min-width: 0; }
+.brand-logo-help { font-size: 12px; line-height: 1.8; color: #637477; margin-bottom: 18px; }
+.brand-logo-preview { display: flex; align-items: center; gap: 12px; background: #0e2435; color: #fff; border-radius: 6px; padding: 20px; margin-bottom: 22px; overflow-wrap: anywhere; }
+.brand-logo-preview .brand-mark { border-color: #ffffff24; }
+.brand-logo-preview > span:last-child:not(.brand-mark) { font-size: 23px; font-weight: 500; letter-spacing: -.7px; min-width: 0; }
+.stats-editor-help { font-size: 12px; line-height: 1.8; color: #637477; margin-bottom: 22px; }

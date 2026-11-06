@@ -1,6 +1,8 @@
-import { createDefaultPartnerTicker } from './model.mjs';
+import { createDefaultBrandLogo, createDefaultHeroStats, createDefaultPartnerTicker } from './model.mjs';
 
 export const initialContent = {
+  brandLogo: createDefaultBrandLogo(),
+  heroStats: createDefaultHeroStats(),
   partnerTicker: createDefaultPartnerTicker(),
   brand: { name: 'Aster', descriptor: 'CHEMICALS', tagline: 'Considered chemistry. Lasting partnerships.' },
   hero: {

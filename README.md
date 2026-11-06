@@ -24,6 +24,12 @@ The production build is in `dist/`. The project uses exact dependency versions a
 
 ## Client editing
 
+In **Brand & navigation → Company logo**, choose an uploaded image, editable initials, or a hidden logo mark. Upload a JPG, PNG, or WebP up to 5 MB, or paste an HTTPS image URL. Transparent PNG or WebP artwork works best on the navy background. Header and footer use the same logo, with initials as a fallback if the image fails to load. Save or publish through the normal workflow.
+
+The **Hero statistics** section controls the figures displayed at the base of the hero. Edit each number and label, reorder or remove entries, add up to four figures, or hide the panel. The initial `00+` values are placeholders for confirmed company figures. Changes use the normal draft, preview, and publish workflow. Existing content gains these settings without replacing any client text.
+
+The **Company & principles** section controls the introduction and benefit cards above the supply partner ticker. Its existing headings, descriptions, note, and card order remain editable.
+
 1. Open `/studio/`. On the first visit, enter the one-time setup code supplied privately in the delivery message and choose a shared password of at least 14 characters. The code expires after seven days and is removed after use.
 2. Select a section, change the content, and review the preview. Desktop and mobile preview are available.
 3. Use **Save draft** to save without changing the public website. Use **Publish changes** to make the draft live.

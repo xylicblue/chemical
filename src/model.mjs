@@ -1,4 +1,19 @@
 export const clone = value => structuredClone(value);
+export function createDefaultBrandLogo(name = 'A') {
+  return { mode: 'initials', text: String(name).trim().slice(0, 1).toUpperCase() || 'A', image: '' };
+}
+export function createDefaultHeroStats() {
+  return {
+    enabled: true,
+    heading: 'Our company in numbers',
+    items: [
+      { value: '00+', label: 'Years of experience' },
+      { value: '00+', label: 'Products available' },
+      { value: '00+', label: 'Supply partners' },
+      { value: '00+', label: 'Industries served' }
+    ]
+  };
+}
 export function createDefaultPartnerTicker() {
   return {
     enabled: true,
@@ -18,7 +33,12 @@ export function createDefaultPartnerTicker() {
   };
 }
 export function withContentDefaults(content) {
-  return { ...content, partnerTicker: content.partnerTicker === undefined ? createDefaultPartnerTicker() : content.partnerTicker };
+  return {
+    ...content,
+    brandLogo: content.brandLogo === undefined ? createDefaultBrandLogo(content.brand?.name) : content.brandLogo,
+    heroStats: content.heroStats === undefined ? createDefaultHeroStats() : content.heroStats,
+    partnerTicker: content.partnerTicker === undefined ? createDefaultPartnerTicker() : content.partnerTicker
+  };
 }
 export function visibleProducts(content, query = '', category = 'All materials') {
   const term = query.trim().toLocaleLowerCase();
@@ -32,6 +52,24 @@ export function validateContent(data) {
   }
   const text = (v, field, max = 5000, required = false) => { if (typeof v !== 'string' || v.length > max || (required && !v.trim())) throw new Error(`Please check ${field}.`); };
   text(data.brand.name, 'company name', 100, true); text(data.hero.title, 'headline', 240, true);
+  if (data.brandLogo !== undefined) {
+    const logo = data.brandLogo;
+    if (!logo || typeof logo !== 'object' || Array.isArray(logo) || !['initials', 'image', 'hidden'].includes(logo.mode)) throw new Error('Please check the company logo display setting.');
+    text(logo.text, 'logo initials', 3, logo.mode === 'initials');
+    text(logo.image, 'company logo URL', 2048, logo.mode === 'image');
+    if (logo.image && !isSafeImage(logo.image)) throw new Error('Use an HTTPS company logo URL or a local asset path.');
+  }
+  if (data.heroStats !== undefined) {
+    const stats = data.heroStats;
+    if (!stats || typeof stats !== 'object' || Array.isArray(stats) || typeof stats.enabled !== 'boolean') throw new Error('Please check the hero statistics settings.');
+    text(stats.heading, 'statistics section name', 120, true);
+    if (!Array.isArray(stats.items) || stats.items.length > 4) throw new Error('Add up to four hero statistics.');
+    for (const item of stats.items) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error('Please check the hero statistic.');
+      text(item.value, 'statistic value', 20, true);
+      text(item.label, 'statistic label', 100, true);
+    }
+  }
   if (!Array.isArray(data.products) || data.products.length > 500) throw new Error('The catalogue can contain up to 500 products.');
   const ids = new Set();
   for (const p of data.products) {

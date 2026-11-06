@@ -6,7 +6,7 @@ import { createServer } from 'vite';
 import { createDefaultPartnerTicker } from '../src/model.mjs';
 
 test('partner presentation handles visibility, text/logo fallback, and accessible duplicate scrolling cards', async () => {
-  const vite = await createServer({configFile:false,server:{middlewareMode:true},appType:'custom'});
+  const vite = await createServer({configFile:false,server:{middlewareMode:true,hmr:false,ws:false},appType:'custom'});
   try {
     const {default: Ticker} = await vite.ssrLoadModule('/src/PartnerTicker.jsx');
     const {default: Editor} = await vite.ssrLoadModule('/src/PartnerTickerEditor.jsx');

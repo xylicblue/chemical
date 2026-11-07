@@ -1,6 +1,7 @@
 import React, { useId, useLayoutEffect, useRef, useState } from 'react';
+import CompanyIcon from './CompanyIcon.jsx';
 
-function CompanyCard({ item }) {
+function CompanyCard({ item, index }) {
   const headingId = useId();
   const description = useRef(null);
   const [descriptionHeight, setDescriptionHeight] = useState(0);
@@ -18,7 +19,7 @@ function CompanyCard({ item }) {
 
   return <article className={`company-card${hasDescription ? ' company-card-reveal' : ''}`} tabIndex={hasDescription ? 0 : undefined} aria-labelledby={headingId} style={{ '--company-description-height': `${descriptionHeight}px` }}>
     <div className="company-card-copy">
-      <h3 id={headingId}>{item.title}</h3>
+      <div className="company-card-heading"><CompanyIcon title={item.title} index={index}/><h3 id={headingId}>{item.title}</h3></div>
       {hasDescription && <p ref={description}>{item.text}</p>}
     </div>
   </article>;
@@ -39,7 +40,7 @@ export default function CompanySection({ content }) {
           </div>
         </header>
         <div className="company-cards">
-          {content.pillars.map((item, index) => <CompanyCard item={item} key={index}/>)}
+          {content.pillars.map((item, index) => <CompanyCard item={item} index={index} key={index}/>)}
         </div>
       </div>
     </section>

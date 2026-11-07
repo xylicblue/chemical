@@ -527,17 +527,20 @@
   border-radius: 9px;
 }
 .company-card h3 { font-size: 21px; font-weight: 500; line-height: 1.35; letter-spacing: -.5px; color: #fff; overflow-wrap: anywhere; }
+.company-card-heading { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.company-card-heading h3 { min-width: 0; text-align: left; }
+.company-card-icon { flex-shrink: 0; color: #b9d5c8; }
 .company-card:not(.company-card-reveal) { min-height: 112px; align-self: start; }
 .company-card p { margin-top: 13px; font-size: 13px; line-height: 1.85; color: #c2d0d5; overflow-wrap: anywhere; }
 .company-card:focus-visible { outline: 2px solid #739c91; outline-offset: 4px; }
 @media (hover: hover) and (pointer: fine) {
-  .company-card-reveal h3 { transform: translateY(calc((var(--company-description-height, 0px) + 13px) / 2)); transition: transform .25s ease; }
+  .company-card-reveal .company-card-heading { transform: translateY(calc((var(--company-description-height, 0px) + 13px) / 2)); transition: transform .25s ease; }
   .company-card-reveal p { opacity: 0; transform: translateY(7px); transition: opacity .2s ease, transform .25s ease; }
-  .company-card-reveal:hover h3, .company-card-reveal:focus-within h3 { transform: translateY(0); }
+  .company-card-reveal:hover .company-card-heading, .company-card-reveal:focus-within .company-card-heading { transform: translateY(0); }
   .company-card-reveal:hover p, .company-card-reveal:focus-within p { opacity: 1; transform: translateY(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .company-card-reveal h3, .company-card-reveal p { transition: none; }
+  .company-card-reveal .company-card-heading, .company-card-reveal p { transition: none; }
 }
 @media (max-width: 1000px) {
   .hero-stat { padding-inline: 17px; }

@@ -517,27 +517,27 @@
 .company-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .company-card {
   min-width: 0;
+  min-height: 240px;
+  display: grid;
+  align-items: center;
   padding: 30px;
+  text-align: center;
   background: #142e3e;
   border: 1px solid #142e3e;
   border-radius: 9px;
 }
-.company-card-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 37px;
-  height: 37px;
-  margin-bottom: 29px;
-  border: 1px solid #8fbaaa60;
-  background: transparent;
-  border-radius: 5px;
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: #b9d5c8;
-}
 .company-card h3 { font-size: 21px; font-weight: 500; line-height: 1.35; letter-spacing: -.5px; color: #fff; overflow-wrap: anywhere; }
 .company-card p { margin-top: 13px; font-size: 13px; line-height: 1.85; color: #c2d0d5; overflow-wrap: anywhere; }
+.company-card:focus-visible { outline: 2px solid #739c91; outline-offset: 4px; }
+@media (hover: hover) and (pointer: fine) {
+  .company-card-reveal h3 { transform: translateY(calc((var(--company-description-height, 0px) + 13px) / 2)); transition: transform .25s ease; }
+  .company-card-reveal p { opacity: 0; transform: translateY(7px); transition: opacity .2s ease, transform .25s ease; }
+  .company-card-reveal:hover h3, .company-card-reveal:focus-within h3 { transform: translateY(0); }
+  .company-card-reveal:hover p, .company-card-reveal:focus-within p { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .company-card-reveal h3, .company-card-reveal p { transition: none; }
+}
 @media (max-width: 1000px) {
   .hero-stat { padding-inline: 17px; }
   .hero-stat dt { font-size: 9px; letter-spacing: 1.1px; }
@@ -567,12 +567,10 @@
   .company-lead { font-size: 14px; }
   .company-note { font-size: 11px; margin-top: 13px; }
   .company-card { padding: 25px; }
-  .company-card-number { margin-bottom: 24px; }
 }
 @media (max-width: 640px) {
   .company-cards { grid-template-columns: 1fr; gap: 13px; }
   .company-card { padding: 25px; }
-  .company-card-number { margin-bottom: 20px; width: 33px; height: 33px; }
   .company-card h3 { font-size: 21px; }
   .company-card p { font-size: 13px; }
 }

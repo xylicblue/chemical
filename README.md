@@ -28,7 +28,11 @@ Public pages show a navy skeleton layout until published content arrives. They n
 
 In **Homepage introduction**, use **Headline accent phrase** to highlight an exact part of the headline in muted sage. Leave it blank to keep the headline white. The supporting description and main button label remain editable there too. Accent styling and spacing do not change the hero image crop.
 
-In **Product catalogue**, edit each material's available grades, purity or concentration, full specifications, packaging sizes, confirmed country of origin and manufacturer, minimum order quantity, and applications. Blank details display confirmation or request messages. Assign one or more industries using the checkboxes, or add an additional sector. The catalogue includes Pharmaceuticals, Cosmetics, Food, Textiles, and Industrial filters, with material category and search working alongside them. Existing explicit industrial categories and textile applications provide initial tags; other product-sector assignments require client confirmation.
+The homepage shows **Popular materials** as gently scrolling name pills. Up to eight popular materials use one row; larger collections use two. Each pill opens material details. In **Product catalogue**, mark a material **Popular material** to include it in the pills. If none are marked, every visible material is included. Hidden products appear in neither the pills nor search. Reduced-motion preferences use a still, horizontally scrollable list, and hovering or keyboard focus stops the motion.
+
+The **Search for more materials** box opens the full catalogue with text search, material category filters, product cards, details, and quote requests. There are no product industry filters, tags, or industry assignments in the editor. Existing industry metadata is preserved in backups for compatibility. The separate company industries section remains editable.
+
+Available grades, purity or concentration, specifications, packaging, origin, manufacturer, minimum order quantity, and applications are optional. Blank fields stay hidden. Each optional field has a **Show on website** checkbox for that material, including formula, CAS, description, note, TDS, and SDS. Turning it off retains its saved value while hiding it from cards, details, and text searches. This is a display setting, not confidential storage: published content remains part of the public content response. Company name and product identity are not changed. Catalogue section headings and search-box copy are editable in Studio.
 
 Set TDS and SDS availability independently. Optionally paste an HTTPS URL to the current document. **Available** with a URL shows a document link; without a URL it displays **Available on request**. New and legacy entries default to **Request availability**. PDF uploads are not part of the image upload control. The quote button opens the inquiry form with the selected product name already filled in. Quote and detail button text can be edited in the catalogue section copy.
 
@@ -36,7 +40,7 @@ In **Brand & navigation → Company logo**, choose an uploaded image, editable i
 
 The **Hero statistics** section controls the figures displayed at the base of the hero. Edit each number and label, reorder or remove entries, add up to four figures, or hide the panel. The initial `00+` values are placeholders for confirmed company figures. Changes use the normal draft, preview, and publish workflow. Existing content gains these settings without replacing any client text.
 
-The **Company & principles** section controls the introduction and benefit cards above the supply partner ticker. Its existing headings, descriptions, note, and card order remain editable.
+The **Company & principles** section controls the introduction and benefit cards above the supply partner ticker. Every card uses the same navy background, white heading, muted light description, and outlined numbered badge. Its existing headings, descriptions, note, and card order remain editable. The Popular materials description sits below its heading on every display size.
 
 1. Open `/studio/`. On the first visit, enter the one-time setup code supplied privately in the delivery message and choose a shared password of at least 14 characters. The code expires after seven days and is removed after use.
 2. Select a section, change the content, and review the preview. Desktop and mobile preview are available.
@@ -57,7 +61,7 @@ The **Supply partners** section appears directly above the product catalogue. In
 - Upload JPG, PNG, or WebP logos up to 5 MB, or paste an HTTPS image URL. Transparent PNG or WebP logos work best.
 - Enable or disable continuous scrolling, choose its speed, and change direction.
 
-Visitors can pause the ticker. Hovering pauses movement, and reduced-motion preferences produce a static, horizontally scrollable row. A single visible partner stays still. Hidden or empty partner lists do not leave an empty section.
+The ticker has no public pause button. Hovering pauses movement, and reduced-motion preferences produce a static, horizontally scrollable row. A single visible partner stays still. Hidden or empty partner lists do not leave an empty section.
 
 Partner changes use **Save draft** and **Publish changes**, including logo URLs stored in Supabase. Old drafts and history entries without a partner section load safe placeholder defaults without changing their saved content. Replace the sample names with confirmed partners and remove the sample note before presenting them as actual suppliers. Logo uploads use the existing protected image endpoint, and no new frontend environment variables are needed.
 

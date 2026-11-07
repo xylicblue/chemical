@@ -20,6 +20,10 @@
 .partner-clear-logo { margin-bottom: 17px; }
 .stats-editor { border: 0; padding: 0; min-width: 0; }
 .product-details-editor { border: 0; padding: 0; margin: 0; min-width: 0; }
+.product-field-editor { border-bottom: 1px solid #e7ece8; margin-bottom: 23px; padding-bottom: 12px; }
+.product-field-editor .editor-field { margin-bottom: 10px; }
+.product-field-toggle { padding-block: 5px; }
+.editor-field .product-optional-label { display: inline; margin-left: 9px; font-size: 10px; color: #819088; font-weight: 400; }
 .product-editor-help { font-size: 12px; line-height: 1.8; color: #637477; margin-bottom: 20px; }
 .product-industry-editor { border: 1px solid #dce4de; border-radius: 6px; padding: 18px; margin: 24px 0; min-width: 0; }
 .product-industry-editor > legend { font-size: 14px; font-weight: 500; padding-inline: 6px; }

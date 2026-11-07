@@ -8,7 +8,7 @@ import PartnerTicker from './PartnerTicker.jsx';
 import HeroStats from './HeroStats.jsx';
 import CompanySection from './CompanySection.jsx';
 import Brand from './Brand.jsx';
-import ProductCatalogue from './ProductCatalogue.jsx';
+import ProductCatalogue, { MaterialSearch } from './ProductCatalogue.jsx';
 import { ProductInformation } from './ProductCard.jsx';
 import HeroHeadline from './HeroHeadline.jsx';
 import SiteContentBoundary from './SiteContentBoundary.jsx';
@@ -38,7 +38,7 @@ export function Website({previewContent}) {
 }
 
 function WebsiteContent({content}) {
-  const [menu,setMenu]=useState(false),[selected,setSelected]=useState(null),[inquiry,setInquiry]=useState(null),[legal,setLegal]=useState(null);
+  const [menu,setMenu]=useState(false),[selected,setSelected]=useState(null),[inquiry,setInquiry]=useState(null),[legal,setLegal]=useState(null),[materialSearch,setMaterialSearch]=useState(false);
   useEffect(()=>{document.title=`${content.brand.name} ${content.brand.descriptor} | ${content.footer.line}`;const meta=document.querySelector('meta[name="description"]');meta?.setAttribute('content',content.hero.description);},[content]);
   useEffect(()=>{if(!menu)return;const listener=e=>{if(e.key==='Escape')setMenu(false);};window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener);},[menu]);
   const c=content;
@@ -47,12 +47,13 @@ function WebsiteContent({content}) {
   <HeroStats settings={c.heroStats}/>
   <CompanySection content={c.intro}/>
   <PartnerTicker settings={c.partnerTicker}/>
-  <ProductCatalogue content={c} onView={setSelected} onQuote={setInquiry}/>
+  <ProductCatalogue content={c} onView={setSelected} onSearch={()=>setMaterialSearch(true)}/>
   <section className="industries-section" id="industries"><div className="shell industries-layout"><div className="industries-intro"><Eyebrow light>{c.industrySection.eyebrow}</Eyebrow><h2><Lines>{c.industrySection.title}</Lines></h2><p>{c.industrySection.description}</p><div className="material-graphic" aria-hidden="true"><div/><div/><div/><span>FORM / FUNCTION</span></div></div><div className="industry-list">{c.industries.map((industry,i)=><div className="industry-row" key={i}><span className="industry-number">{industry.number}</span><div><h3>{industry.name}</h3><p>{industry.detail}</p></div><Arrow diagonal/></div>)}</div></div></section>
   <section className="approach-section shell" id="approach"><div className="section-intro"><Eyebrow>{c.approach.eyebrow}</Eyebrow><h2><Lines>{c.approach.title}</Lines></h2></div><div className="approach-steps">{c.approach.steps.map((step,i)=><div className="approach-step" key={i}><span className="step-number">{String(i+1).padStart(2,'0')}</span><div><h3>{step.title}</h3><p>{step.text}</p></div></div>)}</div></section>
   <section className="contact-section" id="contact"><div className="shell contact-layout"><div><Eyebrow>{c.contact.eyebrow}</Eyebrow><h2><Lines>{c.contact.title}</Lines></h2><p>{c.contact.description}</p><button className="button button-dark" onClick={()=>setInquiry({})}>{c.contact.button}<Arrow/></button></div><div className="contact-details"><span className="contact-label">SAY HELLO</span>{c.contact.email&&<a className="contact-email" href={`mailto:${c.contact.email}`}>{c.contact.email}<Arrow diagonal/></a>}{c.contact.phone&&<a className="contact-phone" href={`tel:${c.contact.phone.replace(/[^+\d]/g,'')}`}>{c.contact.phone}</a>}<div className="contact-address"><p>{c.contact.address}</p><p>{c.contact.hours}</p></div></div></div></section></main>
   <footer className="site-footer"><div className="shell"><div className="footer-main"><Brand content={c} dark/><p>{c.footer.line}</p><a className="back-top" href="#main">Back to top <span aria-hidden="true">↑</span></a></div><div className="footer-bottom"><p>© {new Date().getFullYear()} {c.footer.copyright}</p><div><button onClick={()=>setLegal('privacy')}>Privacy</button><button onClick={()=>setLegal('product')}>Product information</button><a href="/studio/">Content studio</a></div></div><p className="template-disclaimer">{c.footer.disclaimer}</p></div></footer>
   {selected&&<ProductDetail quoteLabel={c.catalogue.quoteLabel} product={selected} onClose={()=>setSelected(null)} onInquire={p=>{setSelected(null);setInquiry(p);}}/>}{inquiry&&<Inquiry product={inquiry} content={c} onClose={()=>setInquiry(null)}/>} {legal&&<Modal title={legal==='privacy'?'Privacy information':'Product information'} onClose={()=>setLegal(null)}><Eyebrow>PLEASE READ</Eyebrow><h3 className="dialog-heading">{legal==='privacy'?c.footer.privacyTitle:c.footer.productInfoTitle}</h3><div className="legal-copy">{(legal==='privacy'?c.footer.privacyText:c.footer.productInfoText).split('\n\n').map((text,i)=><p key={i}>{text}</p>)}</div></Modal>}
+  {materialSearch&&<Modal title={c.catalogue.searchTitle} wide onClose={()=>setMaterialSearch(false)}><MaterialSearch content={c} onQuote={p=>{setMaterialSearch(false);setInquiry(p);}}/></Modal>}
   </div>;
 }
 createRoot(document.getElementById('root')).render(<React.StrictMode>{location.pathname.startsWith('/studio')?<React.Suspense fallback={<main className="p-12 text-sm text-navy">Opening content studio...</main>}><Studio/></React.Suspense>:<Website/>}</React.StrictMode>);

@@ -1,6 +1,12 @@
 export const clone = value => structuredClone(value);
 export const PRODUCT_INDUSTRIES = Object.freeze(['Pharmaceuticals', 'Cosmetics', 'Food', 'Textiles', 'Industrial']);
 export const CATALOGUE_LABELS = Object.freeze({ quoteLabel: 'Request a quotation', detailsLabel: 'View details', industryFilterLabel: 'Browse by industry', allIndustriesLabel: 'All industries' });
+export const PRODUCT_OPTIONAL_FIELDS = Object.freeze(['category', 'formula', 'cas', 'description', 'grade', 'purity', 'specifications', 'packaging', 'origin', 'manufacturer', 'minimumOrder', 'applications', 'note', 'tds', 'sds']);
+export const MATERIAL_BROWSE_LABELS = Object.freeze({ popularTitle: 'Popular materials', searchTitle: 'Search for more materials', searchDescription: 'Explore our full collection, review material details, and request a quotation.' });
+export function productFieldVisible(product, field) {
+  if (product.fieldVisibility?.[field] === false) return false;
+  return ['tds', 'sds'].includes(field) || Boolean(product[field]?.trim());
+}
 export function legacyProductIndustries(product) {
   const industries = [];
   if (/\btextiles?\b/i.test(product.applications || '')) industries.push('Textiles');
@@ -9,8 +15,10 @@ export function legacyProductIndustries(product) {
 }
 export function withProductDefaults(product) {
   return {
+    formula: '', cas: '', description: '', grade: '', packaging: '', applications: '', note: '',
     purity: '', specifications: '', origin: '', manufacturer: '', minimumOrder: '',
     ...product,
+    fieldVisibility: { ...product.fieldVisibility },
     industries: product.industries === undefined ? legacyProductIndustries(product) : product.industries,
     documents: {
       tds: { status: 'request', url: '', ...product.documents?.tds },
@@ -61,18 +69,18 @@ export function withContentDefaults(content) {
   return {
     ...content,
     hero: { highlight: '', ...content.hero },
-    catalogue: { ...CATALOGUE_LABELS, ...content.catalogue },
+    catalogue: { ...CATALOGUE_LABELS, ...MATERIAL_BROWSE_LABELS, ...content.catalogue },
     products: Array.isArray(content.products) ? content.products.map(withProductDefaults) : content.products,
     brandLogo: content.brandLogo === undefined ? createDefaultBrandLogo(content.brand?.name) : content.brandLogo,
     heroStats: content.heroStats === undefined ? createDefaultHeroStats() : content.heroStats,
     partnerTicker: content.partnerTicker === undefined ? createDefaultPartnerTicker() : content.partnerTicker
   };
 }
-export function visibleProducts(content, query = '', category = 'All materials', industry = 'All industries') {
+export function visibleProducts(content, query = '', category = 'All materials') {
   const term = query.trim().toLocaleLowerCase();
-  return content.products.filter(p => p.visible !== false && (category === 'All materials' || p.category === category) && (industry === 'All industries' || (p.industries === undefined ? legacyProductIndustries(p) : p.industries).includes(industry)) && (!term || [p.name, p.category, p.cas, p.formula, p.description, p.applications, p.grade, p.purity, p.specifications, p.packaging, p.origin, p.manufacturer, ...(p.industries || [])].join(' ').toLocaleLowerCase().includes(term))).sort((a,b)=>Number(b.featured)-Number(a.featured));
+  return content.products.filter(p => p.visible !== false && (category === 'All materials' || p.category === category) && (!term || [p.name, ...PRODUCT_OPTIONAL_FIELDS.filter(key => !['tds', 'sds'].includes(key) && productFieldVisible(p, key)).map(key => p[key])].join(' ').toLocaleLowerCase().includes(term))).sort((a,b)=>Number(b.featured)-Number(a.featured));
 }
-export function categories(content) { return ['All materials', ...new Set(content.products.filter(p => p.visible !== false).map(p => p.category))]; }
+export function categories(content) { return ['All materials', ...new Set(content.products.filter(p => p.visible !== false && productFieldVisible(p, 'category')).map(p => p.category))]; }
 export function validateContent(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Website content must be an object.');
   for (const k of ['brand','hero','intro','catalogue','industrySection','approach','contact','footer','navigation']) {
@@ -82,6 +90,7 @@ export function validateContent(data) {
   text(data.brand.name, 'company name', 100, true); text(data.hero.title, 'headline', 240, true);
   if (data.hero.highlight !== undefined) text(data.hero.highlight, 'headline accent phrase', 240);
   for (const key of Object.keys(CATALOGUE_LABELS)) if (data.catalogue[key] !== undefined) text(data.catalogue[key], `catalogue ${key}`, 120, true);
+  for (const key of Object.keys(MATERIAL_BROWSE_LABELS)) if (data.catalogue[key] !== undefined) text(data.catalogue[key], `catalogue ${key}`, 500, true);
   if (data.brandLogo !== undefined) {
     const logo = data.brandLogo;
     if (!logo || typeof logo !== 'object' || Array.isArray(logo) || !['initials', 'image', 'hidden'].includes(logo.mode)) throw new Error('Please check the company logo display setting.');
@@ -106,8 +115,11 @@ export function validateContent(data) {
     text(p.id, 'product identifier', 100, true); text(p.name, 'product name', 160, true); text(p.category, 'product category', 100, true);
     if (!/^[a-z0-9-]+$/.test(p.id) || ids.has(p.id)) throw new Error('Product identifiers must be unique and use lowercase letters, numbers, or hyphens.');
     ids.add(p.id);
-    for (const key of ['formula','cas','grade','description','applications','packaging','note']) text(p[key], `product ${key}`);
+    for (const key of ['formula','cas','grade','description','applications','packaging','note']) if (p[key] !== undefined) text(p[key], `product ${key}`);
     for (const key of ['purity', 'specifications', 'origin', 'manufacturer', 'minimumOrder']) if (p[key] !== undefined) text(p[key], `product ${key}`);
+    if (p.fieldVisibility !== undefined) {
+      if (!p.fieldVisibility || typeof p.fieldVisibility !== 'object' || Array.isArray(p.fieldVisibility) || Object.entries(p.fieldVisibility).some(([key, value]) => !PRODUCT_OPTIONAL_FIELDS.includes(key) || typeof value !== 'boolean')) throw new Error('Please check the optional product field visibility settings.');
+    }
     if (p.industries !== undefined) {
       if (!Array.isArray(p.industries) || p.industries.length > 15) throw new Error('Choose up to 15 industries per product.');
       const sectors = new Set();

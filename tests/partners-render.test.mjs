@@ -19,7 +19,8 @@ test('partner presentation handles visibility, text/logo fallback, and accessibl
     assert.ok(one.includes('partners-static'));
     assert.ok(!one.includes('Pause movement'));
     const full = render(settings);
-    assert.ok(full.includes('Pause movement'));
+    assert.ok(!full.includes('Pause movement'));
+    assert.ok(!full.includes('Resume movement'));
     const accessible = full.match(/<ul class="sr-only">(.*?)<\/ul>/s)[1];
     assert.equal((accessible.match(/Partner One/g)||[]).length,1);
     const logo = {...settings.items[0],presentation:'logo',logo:'https://example.com/logo.png'};

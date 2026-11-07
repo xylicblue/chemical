@@ -1,4 +1,4 @@
-import { CATALOGUE_LABELS, createDefaultBrandLogo, createDefaultHeroStats, createDefaultPartnerTicker, withProductDefaults } from './model.mjs';
+import { CATALOGUE_LABELS, MATERIAL_BROWSE_LABELS, createDefaultBrandLogo, createDefaultHeroStats, createDefaultPartnerTicker, withProductDefaults } from './model.mjs';
 
 export const initialContent = {
   brandLogo: createDefaultBrandLogo(),
@@ -26,7 +26,7 @@ export const initialContent = {
       { title: 'Keep it clear.', text: 'Straightforward conversations about sourcing, packaging, and delivery requirements.' }
     ]
   },
-  catalogue: { ...CATALOGUE_LABELS, eyebrow: 'THE PRODUCT COLLECTION', title: 'Materials with purpose.', description: 'Explore a sample of our product range. Find your category, review the details, and start a conversation.', searchPlaceholder: 'Search name, application or CAS number', emptyTitle: 'No matching materials.', emptyText: 'Try another search or category. You can also ask us about a specific material.' },
+  catalogue: { ...CATALOGUE_LABELS, ...MATERIAL_BROWSE_LABELS, eyebrow: 'THE PRODUCT COLLECTION', title: 'Materials with purpose.', description: 'Explore our materials. Select a name for details, or search the full collection.', searchPlaceholder: 'Search name, application or CAS number', emptyTitle: 'No matching materials.', emptyText: 'Try another search or category. You can also ask us about a specific material.' },
   products: [
     { id: 'sodium-carbonate', name: 'Sodium carbonate', category: 'Industrial', formula: 'Na₂CO₃', cas: '497-19-8', grade: 'Grade to be confirmed', description: 'A versatile inorganic material commonly discussed for glass, detergent, and industrial processing applications.', applications: 'Glass manufacturing, detergents, process chemistry', packaging: 'Packaging and order quantities on request', note: 'Confirm grade, suitability, specifications, and handling requirements with the supplier before ordering.', featured: true, visible: true },
     { id: 'citric-acid', name: 'Citric acid', category: 'Specialty', formula: 'C₆H₈O₇', cas: '77-92-9', grade: 'Grade to be confirmed', description: 'An organic acid used in a range of formulations and processing applications where acidity control is required.', applications: 'Formulation, cleaning, process adjustment', packaging: 'Packaging and order quantities on request', note: 'Application suitability and regulatory requirements depend on the supplied grade. Request full documentation.', featured: true, visible: true },

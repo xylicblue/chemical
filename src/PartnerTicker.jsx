@@ -23,7 +23,6 @@ export default function PartnerTicker({ settings }) {
   const viewport = useRef(null);
   const group = useRef(null);
   const headingId = useId();
-  const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [repeat, setRepeat] = useState(1);
   const [distance, setDistance] = useState(0);
@@ -70,11 +69,6 @@ export default function PartnerTicker({ settings }) {
           {hasHeading && <h2 id={headingId}>{settings.heading}</h2>}
           {settings.note && <p>{settings.note}</p>}
         </div>
-        {canMove && (
-          <button type="button" className="ticker-control" aria-pressed={paused} onClick={() => setPaused(value => !value)}>
-            {paused ? 'Resume movement' : 'Pause movement'}
-          </button>
-        )}
       </div>
       <ul className="sr-only">
         {items.map(item => <li key={item.id}>{item.name}{item.presentation === 'logo' && item.logoAlt ? `. ${item.logoAlt}` : ''}</li>)}
@@ -87,7 +81,7 @@ export default function PartnerTicker({ settings }) {
         tabIndex={canMove ? undefined : 0}
       >
         <div
-          className={`partners-track ${paused ? 'is-paused' : ''}`}
+          className="partners-track"
           aria-hidden="true"
           style={{
             '--ticker-distance': `${distance}px`,

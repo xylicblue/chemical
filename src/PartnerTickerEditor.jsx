@@ -26,7 +26,7 @@ export default function PartnerTickerEditor({ settings, onChange, onUploadLogo, 
         <label className="editor-field"><span>Movement speed</span><select value={settings.speed} onChange={e => change('speed', e.target.value)}><option value="slow">Slow and subtle</option><option value="standard">Standard</option><option value="fast">Faster</option></select></label>
         <label className="editor-field"><span>Direction</span><select value={settings.direction} onChange={e => change('direction', e.target.value)}><option value="left">Move left</option><option value="right">Move right</option></select></label>
       </div>
-      <p className="partner-editor-help">Visitors can pause movement. Reduced-motion preferences show a still, horizontally scrollable list. A single visible partner stays still.</p>
+      <p className="partner-editor-help">Movement pauses on hover. Reduced-motion preferences show a still, horizontally scrollable list. A single visible partner stays still.</p>
       <div className="partner-editor-heading"><h2>Partner cards</h2><span>{settings.items.length} / 40</span></div>
       {settings.items.length === 0 && <p className="editor-empty">No partners added. The section stays hidden until you add a visible partner.</p>}
       {settings.items.map((partner, index) => (

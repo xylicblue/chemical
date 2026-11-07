@@ -4,7 +4,8 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { initialContent } from '../src/content.mjs';
-import { clone, isSafeDocument, productIndustryOptions, validateContent, visibleProducts, withContentDefaults, withProductDefaults } from '../src/model.mjs';
+import { categories, clone, isSafeDocument, productIndustryOptions, validateContent, visibleProducts, withContentDefaults, withProductDefaults } from '../src/model.mjs';
+import { popularMaterialRows } from '../src/material-browse.mjs';
 import { createHandler } from '../supabase/functions/chemicals-cms/handler.mjs';
 
 const additionalFields = ['purity', 'specifications', 'origin', 'manufacturer', 'minimumOrder', 'industries', 'documents'];
@@ -30,7 +31,7 @@ test('legacy products and backups gain optional sourcing details without changin
   assert.equal(withContentDefaults(old).products[0].documents.tds.status, 'request');
 });
 
-test('industry, category, and sourcing searches intersect while hidden products stay private', () => {
+test('category and sourcing searches exclude hidden facts, legacy industry tags, and hidden products', () => {
   const content = clone(initialContent);
   const p = content.products[0];
   p.industries = ['Pharmaceuticals', 'Food'];
@@ -38,14 +39,17 @@ test('industry, category, and sourcing searches intersect while hidden products 
   p.purity = 'Example 99.5%';
   p.origin = 'Example origin';
   p.manufacturer = 'Example manufacturer';
-  for (const query of ['99.5%', 'Example origin', 'Example manufacturer', 'confirmed grade', 'Pharmaceuticals']) {
-    assert.deepEqual(visibleProducts(content, query, p.category, 'Food').map(item => item.id), [p.id]);
+  for (const query of ['99.5%', 'Example origin', 'Example manufacturer', 'confirmed grade']) {
+    assert.deepEqual(visibleProducts(content, query, p.category).map(item => item.id), [p.id]);
   }
-  assert.equal(visibleProducts(content, 'Example manufacturer', p.category, 'Textiles').length, 0);
-  assert.equal(visibleProducts(content, 'Example manufacturer', 'Solvents', 'Food').length, 0);
+  assert.equal(visibleProducts(content, 'Pharmaceuticals').length, 0);
+  assert.equal(visibleProducts(content, 'Example manufacturer', 'Solvents').length, 0);
+  p.fieldVisibility = { manufacturer: false };
+  assert.equal(visibleProducts(content, 'Example manufacturer').length, 0);
+  assert.deepEqual(categories({ products: [{ ...p, fieldVisibility: { category: false } }] }), ['All materials']);
   p.visible = false;
   p.industries.push('Private custom sector');
-  assert.equal(visibleProducts(content, 'Example manufacturer', 'All materials', 'Food').length, 0);
+  assert.equal(visibleProducts(content, 'Example origin').length, 0);
   assert.ok(!productIndustryOptions(content).includes('Private custom sector'));
   assert.ok(productIndustryOptions(content, true).includes('Private custom sector'));
 });
@@ -91,7 +95,7 @@ test('authenticated CMS saves preserve nested sourcing details and reject unsafe
     return Response.json(19);
   } });
   const content = clone(initialContent);
-  Object.assign(content.products[0], { purity: 'Example 99%', origin: 'Example country', minimumOrder: 'Example 100 kg', industries: ['Food'] });
+  Object.assign(content.products[0], { purity: 'Example 99%', origin: 'Example country', minimumOrder: 'Example 100 kg', industries: ['Food'], fieldVisibility: { grade: false, origin: false, tds: true, sds: false } });
   content.products[0].documents.tds = { status: 'available', url: 'https://example.com/tds.pdf' };
   const request = () => new Request('https://project.supabase.co/functions/v1/chemicals-cms?action=save', {
     method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', Authorization: `Bearer ${'a'.repeat(64)}` }, body: JSON.stringify({ content, revision: 18 }),
@@ -103,29 +107,92 @@ test('authenticated CMS saves preserve nested sourcing details and reject unsafe
   assert.equal(saves, 1);
 });
 
-test('cards, product details, editor controls, and sector filters expose sourcing facts without claiming unknown availability', async () => {
+test('homepage pills lead to a full search catalogue without industry divisions', async () => {
   const vite = await createServer({ configFile: false, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' });
   try {
     const { default: Card, ProductInformation, ProductDocumentation } = await vite.ssrLoadModule('/src/ProductCard.jsx');
     const { default: Editor } = await vite.ssrLoadModule('/src/ProductEditor.jsx');
-    const { default: Catalogue } = await vite.ssrLoadModule('/src/ProductCatalogue.jsx');
+    const { default: Catalogue, MaterialSearch } = await vite.ssrLoadModule('/src/ProductCatalogue.jsx');
     const p = withProductDefaults(initialContent.products[0]);
     const card = renderToStaticMarkup(React.createElement(Card, { product: p, onView() {}, onQuote() {} }));
-    for (const label of ['Available grades', 'Purity / concentration', 'Packaging', 'Minimum order', 'Applications', 'Documentation', 'Request availability', 'Request a quotation']) assert.ok(card.includes(label), label);
+    for (const label of ['Available grades', 'Packaging', 'Applications', 'Documentation', 'Request availability', 'Request a quotation']) assert.ok(card.includes(label), label);
+    for (const blankField of ['Purity / concentration', 'Minimum order quantity', 'Country of origin']) assert.ok(!card.includes(blankField));
     assert.ok(card.includes('<article'));
     assert.ok(!card.includes('<button class="product-card"'));
     const detail = renderToStaticMarkup(React.createElement(ProductInformation, { product: p, onQuote() {} }));
-    for (const label of ['Specifications', 'Country of origin', 'Manufacturer', 'Minimum order quantity', 'Technical Data Sheet (TDS)', 'Safety Data Sheet (SDS)', 'Confirm with supplier']) assert.ok(detail.includes(label), label);
+    for (const label of ['Available grades', 'Technical Data Sheet (TDS)', 'Safety Data Sheet (SDS)']) assert.ok(detail.includes(label), label);
+    for (const blankField of ['Specifications', 'Country of origin', 'Manufacturer', 'Minimum order quantity', 'Confirm with supplier']) assert.ok(!detail.includes(blankField));
     assert.ok(!detail.includes('href='));
     const documents = { tds: { status: 'available', url: 'https://example.com/tds.pdf' }, sds: { status: 'request', url: 'https://example.com/unconfirmed.pdf' } };
     const docs = renderToStaticMarkup(React.createElement(ProductDocumentation, { documents }));
     assert.ok(docs.includes('href="https://example.com/tds.pdf"'));
     assert.ok(docs.includes('rel="noopener noreferrer"'));
     assert.ok(!docs.includes('unconfirmed.pdf'));
-    const editor = renderToStaticMarkup(React.createElement(Editor, { product: p, industryOptions: productIndustryOptions(initialContent, true), onChange() {}, busy: false }));
-    for (const label of ['Available grades', 'Purity / concentration', 'Relevant specifications', 'Available packaging sizes', 'Country of origin', 'Manufacturer', 'Minimum order quantity', 'TDS availability', 'SDS availability', 'Pharmaceuticals', 'Cosmetics', 'Food', 'Textiles', 'Industrial']) assert.ok(editor.includes(label), label);
-    const catalogue = renderToStaticMarkup(React.createElement(Catalogue, { content: initialContent, onView() {}, onQuote() {} }));
-    assert.ok(catalogue.includes('Browse by industry'));
-    assert.ok(catalogue.includes('aria-pressed="true">All industries'));
+    const editor = renderToStaticMarkup(React.createElement(Editor, { product: p, onChange() {}, busy: false }));
+    for (const label of ['Available grades', 'Purity / concentration', 'Relevant specifications', 'Available packaging sizes', 'Country of origin', 'Manufacturer', 'Minimum order quantity', 'TDS availability', 'SDS availability', 'Show available grades on website', 'Show SDS availability on website']) assert.ok(editor.includes(label), label);
+    assert.ok(!editor.includes('Industries served'));
+    const catalogue = renderToStaticMarkup(React.createElement(Catalogue, { content: initialContent, onView() {}, onSearch() {} }));
+    assert.ok(catalogue.includes('Popular materials'));
+    assert.ok(catalogue.includes('Search for more materials'));
+    assert.ok(catalogue.includes('material-pill'));
+    assert.ok(catalogue.includes('aria-haspopup="dialog"'));
+    assert.ok(!catalogue.includes('sourcing-card'));
+    const search = renderToStaticMarkup(React.createElement(MaterialSearch, { content: initialContent, onQuote() {} }));
+    assert.ok(search.includes('type="search"'));
+    assert.equal((search.match(/class="sourcing-card"/g) || []).length, initialContent.products.length);
+    for (const html of [catalogue, search, detail, card]) {
+      assert.ok(!html.includes('Browse by industry'));
+      assert.ok(!html.includes('All industries'));
+      assert.ok(!html.includes('product-industry-tags'));
+    }
+  } finally { await vite.close(); }
+});
+
+test('optional field settings survive backups and reject malformed visibility values', () => {
+  const content = clone(initialContent);
+  const product = content.products[0];
+  product.fieldVisibility = { grade: false, purity: false, tds: true, sds: false };
+  const restored = withContentDefaults(JSON.parse(JSON.stringify(validateContent(content))));
+  assert.deepEqual(restored.products[0], product);
+  assert.equal(product.grade, restored.products[0].grade);
+  for (const value of [null, [], 'hidden', { grade: 'false' }, { name: false }, { industries: true }]) {
+    const invalid = clone(content); invalid.products[0].fieldVisibility = value;
+    assert.throws(() => validateContent(invalid), /visibility/);
+  }
+  for (const key of ['grade', 'purity', 'specifications', 'packaging', 'origin', 'manufacturer', 'minimumOrder', 'applications', 'note', 'formula', 'cas', 'description', 'documents']) delete product[key];
+  assert.doesNotThrow(() => validateContent(content));
+  assert.doesNotThrow(() => validateContent(withContentDefaults(content)));
+});
+
+test('popular materials use visible featured choices, fall back to all visible materials, and form at most two rows', () => {
+  const content = clone(initialContent);
+  content.products.forEach(p => { p.featured = false; });
+  assert.equal(popularMaterialRows(content).length, 1);
+  assert.equal(popularMaterialRows(content).flat().length, content.products.length);
+  content.products[0].featured = true;
+  content.products[1].visible = false; content.products[1].featured = true;
+  assert.deepEqual(popularMaterialRows(content).flat().map(p => p.id), [content.products[0].id]);
+  content.products = Array.from({ length: 17 }, (_, i) => ({ ...content.products[0], id: `test-${i}`, featured: false }));
+  assert.deepEqual(popularMaterialRows(content).map(row => row.length), [9, 8]);
+  content.products.forEach(p => { p.visible = false; });
+  assert.deepEqual(popularMaterialRows(content), []);
+});
+
+test('per-material visibility hides saved facts and documents in both cards and details without discarding values', async () => {
+  const vite = await createServer({ configFile: false, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' });
+  try {
+    const { default: Card, ProductInformation } = await vite.ssrLoadModule('/src/ProductCard.jsx');
+    const p = withProductDefaults({ ...initialContent.products[0], grade: 'Private grade', purity: 'Private purity', origin: 'Private origin', documents: { tds: { status: 'available', url: 'https://example.com/private-tds.pdf' }, sds: { status: 'available', url: 'https://example.com/sds.pdf' } }, fieldVisibility: { grade: false, purity: false, origin: false, tds: false, sds: true } });
+    const before = clone(p);
+    for (const Component of [Card, ProductInformation]) {
+      const html = renderToStaticMarkup(React.createElement(Component, { product: p, onView() {}, onQuote() {} }));
+      for (const value of ['Private grade', 'Private purity', 'Private origin', 'private-tds.pdf', 'Technical Data Sheet']) assert.ok(!html.includes(value));
+      assert.ok(html.includes('SDS'));
+    }
+    const restored = { ...p, fieldVisibility: { ...p.fieldVisibility, grade: true, tds: true } };
+    const html = renderToStaticMarkup(React.createElement(ProductInformation, { product: restored, onQuote() {} }));
+    assert.ok(html.includes('Private grade'));
+    assert.ok(html.includes('https://example.com/private-tds.pdf'));
+    assert.deepEqual(p, before);
   } finally { await vite.close(); }
 });

@@ -5,7 +5,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { initialContent } from '../src/content.mjs';
 import { categories, clone, isSafeDocument, productIndustryOptions, validateContent, visibleProducts, withContentDefaults, withProductDefaults } from '../src/model.mjs';
-import { popularMaterialRows } from '../src/material-browse.mjs';
+import { productPage, productPageNumbers, PRODUCTS_PER_PAGE } from '../src/product-list.mjs';
+import { catalogueWithSamples } from '../src/catalogue-demo.mjs';
 import { createHandler } from '../supabase/functions/chemicals-cms/handler.mjs';
 
 const additionalFields = ['purity', 'specifications', 'origin', 'manufacturer', 'minimumOrder', 'industries', 'documents'];
@@ -107,19 +108,16 @@ test('authenticated CMS saves preserve nested sourcing details and reject unsafe
   assert.equal(saves, 1);
 });
 
-test('homepage pills lead to a full search catalogue without industry divisions', async () => {
+test('landing-page products show names only with compact name search and no industry divisions', async () => {
   const vite = await createServer({ configFile: false, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' });
   try {
-    const { default: Card, ProductInformation, ProductDocumentation } = await vite.ssrLoadModule('/src/ProductCard.jsx');
+    const { ProductInformation, ProductDocumentation } = await vite.ssrLoadModule('/src/ProductCard.jsx');
     const { default: Editor } = await vite.ssrLoadModule('/src/ProductEditor.jsx');
-    const { default: Catalogue, MaterialSearch } = await vite.ssrLoadModule('/src/ProductCatalogue.jsx');
+    const { default: Catalogue } = await vite.ssrLoadModule('/src/ProductCatalogue.jsx');
     const p = withProductDefaults(initialContent.products[0]);
-    const card = renderToStaticMarkup(React.createElement(Card, { product: p, onView() {}, onQuote() {} }));
-    for (const label of ['Available grades', 'Packaging', 'Applications', 'Documentation', 'Request availability', 'Request a quotation']) assert.ok(card.includes(label), label);
-    for (const blankField of ['Purity / concentration', 'Minimum order quantity', 'Country of origin']) assert.ok(!card.includes(blankField));
-    assert.ok(card.includes('<article'));
-    assert.ok(!card.includes('<button class="product-card"'));
     const detail = renderToStaticMarkup(React.createElement(ProductInformation, { product: p, onQuote() {} }));
+    assert.ok(!detail.includes(p.formula));
+    assert.ok(detail.includes(p.cas));
     for (const label of ['Available grades', 'Technical Data Sheet (TDS)', 'Safety Data Sheet (SDS)']) assert.ok(detail.includes(label), label);
     for (const blankField of ['Specifications', 'Country of origin', 'Manufacturer', 'Minimum order quantity', 'Confirm with supplier']) assert.ok(!detail.includes(blankField));
     assert.ok(!detail.includes('href='));
@@ -131,19 +129,22 @@ test('homepage pills lead to a full search catalogue without industry divisions'
     const editor = renderToStaticMarkup(React.createElement(Editor, { product: p, onChange() {}, busy: false }));
     for (const label of ['Available grades', 'Purity / concentration', 'Relevant specifications', 'Available packaging sizes', 'Country of origin', 'Manufacturer', 'Minimum order quantity', 'TDS availability', 'SDS availability', 'Show available grades on website', 'Show SDS availability on website']) assert.ok(editor.includes(label), label);
     assert.ok(!editor.includes('Industries served'));
-    const catalogue = renderToStaticMarkup(React.createElement(Catalogue, { content: initialContent, onView() {}, onSearch() {} }));
-    assert.ok(catalogue.includes('Popular materials'));
-    assert.ok(catalogue.includes('Search for more materials'));
-    assert.ok(catalogue.includes('material-pill'));
-    assert.ok(catalogue.includes('aria-haspopup="dialog"'));
-    assert.ok(!catalogue.includes('sourcing-card'));
-    const search = renderToStaticMarkup(React.createElement(MaterialSearch, { content: initialContent, onQuote() {} }));
-    assert.ok(search.includes('type="search"'));
-    assert.equal((search.match(/class="sourcing-card"/g) || []).length, initialContent.products.length);
-    for (const html of [catalogue, search, detail, card]) {
-      assert.ok(!html.includes('Browse by industry'));
-      assert.ok(!html.includes('All industries'));
-      assert.ok(!html.includes('product-industry-tags'));
+    assert.ok(!editor.includes('Chemical formula'));
+    const catalogue = renderToStaticMarkup(React.createElement(Catalogue, { content: initialContent, onView() {} }));
+    assert.ok(catalogue.includes('Our products'));
+    assert.ok(catalogue.includes('product-name-grid'));
+    assert.ok(catalogue.includes('type="search"'));
+    assert.ok(catalogue.includes('Search products by name'));
+    assert.equal((catalogue.match(/aria-haspopup="dialog"/g) || []).length, initialContent.products.length);
+    for (const product of initialContent.products) {
+      assert.ok(catalogue.includes(product.name));
+      assert.ok(!catalogue.includes(product.description));
+      assert.ok(!catalogue.includes(product.formula));
+      assert.ok(!catalogue.includes(product.cas));
+    }
+    assert.ok(!catalogue.includes('Product pages'));
+    for (const html of [catalogue, detail]) {
+      for (const removed of ['Search for more materials', 'Browse by industry', 'All industries', 'product-industry-tags', 'material-pill', '<select']) assert.ok(!html.includes(removed), removed);
     }
   } finally { await vite.close(); }
 });
@@ -164,27 +165,104 @@ test('optional field settings survive backups and reject malformed visibility va
   assert.doesNotThrow(() => validateContent(withContentDefaults(content)));
 });
 
-test('popular materials use visible featured choices, fall back to all visible materials, and form at most two rows', () => {
-  const content = clone(initialContent);
-  content.products.forEach(p => { p.featured = false; });
-  assert.equal(popularMaterialRows(content).length, 1);
-  assert.equal(popularMaterialRows(content).flat().length, content.products.length);
-  content.products[0].featured = true;
-  content.products[1].visible = false; content.products[1].featured = true;
-  assert.deepEqual(popularMaterialRows(content).flat().map(p => p.id), [content.products[0].id]);
-  content.products = Array.from({ length: 17 }, (_, i) => ({ ...content.products[0], id: `test-${i}`, featured: false }));
-  assert.deepEqual(popularMaterialRows(content).map(row => row.length), [9, 8]);
-  content.products.forEach(p => { p.visible = false; });
-  assert.deepEqual(popularMaterialRows(content), []);
+test('pagination includes every visible product exactly once, preserves Studio order, and clamps stale pages', () => {
+  const products = Array.from({ length: 33 }, (_, index) => ({ ...initialContent.products[0], id: 'test-' + index, name: 'Product ' + index, featured: index % 2 === 0, visible: index % 5 !== 0 }));
+  const before = clone(products);
+  const expected = products.filter(product => product.visible);
+  const pages = Array.from({ length: Math.ceil(expected.length / PRODUCTS_PER_PAGE) }, (_, index) => productPage(products, index + 1));
+  assert.deepEqual(pages.flatMap(page => page.items), expected);
+  assert.ok(pages.every(page => page.items.length <= 12));
+  assert.equal(pages[0].start, 1);
+  assert.equal(pages[0].end, 12);
+  assert.equal(pages.at(-1).end, expected.length);
+  assert.equal(productPage(products, 999).page, pages.length);
+  for (const invalid of [0, -1, NaN, Infinity]) assert.equal(productPage(products, invalid).page, 1);
+  assert.deepEqual(products, before);
+  assert.deepEqual(productPage([]), { items: [], page: 1, pageCount: 1, total: 0, start: 0, end: 0 });
+  assert.equal(productPage(products.map(product => ({ ...product, visible: false })), 9).total, 0);
+  for (let current = 1; current <= 42; current++) {
+    const numbers = productPageNumbers(current, 42);
+    assert.equal(numbers[0], 1);
+    assert.equal(numbers.at(-1), 42);
+    assert.ok(numbers.includes(current));
+    assert.ok(numbers.length <= 9);
+    assert.equal(new Set(numbers.filter(Boolean)).size, numbers.filter(Boolean).length);
+  }
 });
 
-test('per-material visibility hides saved facts and documents in both cards and details without discarding values', async () => {
+test('the product directory renders bounded pages, meaningful navigation, empty states, and editable copy', async () => {
   const vite = await createServer({ configFile: false, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' });
   try {
-    const { default: Card, ProductInformation } = await vite.ssrLoadModule('/src/ProductCard.jsx');
+    const { default: Catalogue } = await vite.ssrLoadModule('/src/ProductCatalogue.jsx');
+    const content = clone(initialContent);
+    content.catalogue.listingTitle = 'Client product collection';
+    content.products = Array.from({ length: 25 }, (_, index) => ({ ...content.products[0], id: 'product-' + index, name: 'Listing item ' + String(index).padStart(2, '0') }));
+    const html = renderToStaticMarkup(React.createElement(Catalogue, { content, onView() {} }));
+    assert.ok(html.includes('Client product collection'));
+    assert.ok(html.includes('Showing 1 to 12 of 25 products'));
+    assert.equal((html.match(/class="product-name-link"/g) || []).length, 12);
+    assert.ok(!html.includes('Listing item 12'));
+    assert.ok(html.includes('aria-label="Product pages"'));
+    assert.ok(html.includes('aria-current="page"'));
+    assert.ok(html.includes('disabled=""'));
+    assert.ok(html.includes('type="search"'));
+    content.products = [];
+    const empty = renderToStaticMarkup(React.createElement(Catalogue, { content, onView() {} }));
+    assert.ok(empty.includes('Contact our team'));
+    assert.ok(!empty.includes('aria-label="Product pages"'));
+  } finally { await vite.close(); }
+});
+
+test('name search filters the entire catalogue before pagination and keeps hidden products excluded', () => {
+  const products = Array.from({ length: 31 }, (_, index) => ({ ...initialContent.products[0], id: `match-${index}`, name: `Test material ${index}`, category: 'Not a name match', visible: index !== 7 }));
+  const before = clone(products);
+  const first = productPage(products, 1, '  TEST MATERIAL  ');
+  const last = productPage(products, 999, 'test material');
+  assert.equal(first.total, 30);
+  assert.equal(first.items.length, 12);
+  assert.equal(last.page, 3);
+  assert.equal(last.items.length, 6);
+  assert.equal(productPage(products, 1, 'Not a name match').total, 0);
+  assert.equal(productPage(products, 1, 'Test material 7').total, 0);
+  assert.equal(productPage(products, 1, 'nothing matches').pageCount, 1);
+  assert.equal(productPage(products, 1, '').total, 30);
+  assert.deepEqual(products, before);
+});
+
+test('pagination preview adds labelled sample entries without changing real products or enabling sample quotes', async () => {
+  const before = clone(initialContent.products);
+  const products = catalogueWithSamples(initialContent.products);
+  assert.deepEqual(initialContent.products, before);
+  assert.equal(products.length, initialContent.products.length + 24);
+  assert.ok(productPage(products).pageCount >= 3);
+  const sample = products.find(product => product.demo === true);
+  const restored = clone(initialContent); restored.products = products;
+  assert.doesNotThrow(() => validateContent(restored));
+  const vite = await createServer({ configFile: false, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' });
+  try {
+    const { default: Catalogue } = await vite.ssrLoadModule('/src/ProductCatalogue.jsx');
+    const { ProductInformation } = await vite.ssrLoadModule('/src/ProductCard.jsx');
+    const demo = renderToStaticMarkup(React.createElement(Catalogue, { content: initialContent, demo: true, onView() {} }));
+    const normal = renderToStaticMarkup(React.createElement(Catalogue, { content: initialContent, onView() {} }));
+    assert.ok(demo.includes('Pagination preview'));
+    assert.ok(demo.includes('aria-label="Product pages"'));
+    assert.ok(!normal.includes('Pagination preview'));
+    assert.ok(!normal.includes(sample.name));
+    const detail = renderToStaticMarkup(React.createElement(ProductInformation, { product: sample, onQuote() {} }));
+    assert.ok(detail.includes('Preview entry only'));
+    assert.ok(detail.includes('disabled=""'));
+    assert.ok(detail.includes('does not confirm stock'));
+    assert.deepEqual(initialContent.products, before);
+  } finally { await vite.close(); }
+});
+
+test('per-material visibility hides saved facts and documents in the detail modal without discarding values', async () => {
+  const vite = await createServer({ configFile: false, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' });
+  try {
+    const { ProductInformation } = await vite.ssrLoadModule('/src/ProductCard.jsx');
     const p = withProductDefaults({ ...initialContent.products[0], grade: 'Private grade', purity: 'Private purity', origin: 'Private origin', documents: { tds: { status: 'available', url: 'https://example.com/private-tds.pdf' }, sds: { status: 'available', url: 'https://example.com/sds.pdf' } }, fieldVisibility: { grade: false, purity: false, origin: false, tds: false, sds: true } });
     const before = clone(p);
-    for (const Component of [Card, ProductInformation]) {
+    for (const Component of [ProductInformation]) {
       const html = renderToStaticMarkup(React.createElement(Component, { product: p, onView() {}, onQuote() {} }));
       for (const value of ['Private grade', 'Private purity', 'Private origin', 'private-tds.pdf', 'Technical Data Sheet']) assert.ok(!html.includes(value));
       assert.ok(html.includes('SDS'));
